@@ -1,0 +1,15 @@
+{
+  "name": "infra-humana-ats",
+  "version": "2.3.0",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node app.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "mysql2": "3.24.6"
+  }
+}

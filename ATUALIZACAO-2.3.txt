@@ -1,0 +1,70 @@
+INFRA HUMANA ATS — ATUALIZAÇÃO 2.3
+Preparada em 09/11/2026. Pacote para a instalação existente da versão 2.2.
+
+O QUE MUDA
+- Tema normal em cinzas suaves, verdes coordenados e todos os indicadores verdes.
+- Modo noturno opcional, com preferência lembrada neste navegador. Botão no menu e no login.
+- Remoção da faixa superior; títulos de seção maiores e marca alinhada.
+- Empresas, vagas, cidades e candidatos selecionados por pesquisa, com até 8 sugestões.
+- Filtros avançados: é/não é, contém/não contém, vazio/preenchido; combinação E/OU.
+- Pesquisa com !, E, OU e campos, com explicação do significado e aviso de sintaxe inválida.
+- Listagens paginadas: até 50 registros por página. Pesquisa também dentro da vaga.
+- Indicadores clicáveis: vagas em andamento, vencidas, apresentações do mês e retorno pendente.
+- Profissionais mapeados: contagem automática de candidatos vinculados à vaga. O antigo valor manual permanece guardado no banco, mas deixa de ser editado/exibido.
+- Preserva as melhorias anteriores: etapas RH/cliente, vínculos sem etapa, exclusões confirmadas, logos de empresas e mostrar/ocultar senha.
+- SharePoint NÃO incluído; continua dependendo de acesso e autorização específica.
+
+INSTALAÇÃO NO PAINEL MUNHOZ
+1. Combine uma pausa com a equipe; ninguém deve editar durante a atualização.
+2. Faça um backup SQL atualizado do banco infraest_ats e baixe uma cópia da pasta infra-humana-ats.
+3. No aplicativo Node.js do ATS, clique em Parar aplicativo.
+4. Faça upload deste ZIP na pasta /home/infraest/infra-humana-ats e extraia ali, substituindo os arquivos existentes. Não crie outra pasta infra-humana-ats dentro dela.
+5. Confira: server.js, app.js e a pasta public devem estar diretamente na raiz do aplicativo. Dentro de public devem existir query.js e theme.js.
+6. Mantenha as variáveis de ambiente atuais. Nenhuma nova variável é exigida. Não altere o .htaccess do subdomínio.
+7. Inicie o aplicativo Node.js. As dependências continuam iguais; não é necessário executar NPM para esta atualização.
+8. Abra https://ats.infrahumana.com.br e use Ctrl+Shift+R. As demais pessoas também devem atualizar/reabrir suas abas antes de editar.
+9. Em Configurações, confira a indicação Versão 2.3.
+
+VERIFICAÇÃO APÓS INSTALAR
+- Entrar com o acesso existente e conferir os cadastros.
+- Alternar o tema e recarregar; a preferência deve permanecer.
+- Pesquisar candidato, abrir filtros avançados e testar !entrevista feita.
+- Selecionar vaga/empresa por digitação e teclado.
+- Vincular um candidato de teste: etapa em branco e contagem de mapeados atualizada.
+- Mudar a etapa para Material enviado ao cliente e conferir apresentação/data/indicador.
+- Clicar em cada indicador; conferir o total e as linhas exibidas.
+- Conferir as telas no celular e o histórico com o autor correto.
+
+COMO PESQUISAR
+- Pesquisa comum: Ana Souza
+- Sem entrevista realizada registrada: !entrevista feita
+- Etapa específica: etapa:"Em tratativa"
+- Outra etapa: !etapa:"Entrevista feita"
+- Combinação: cidade:"São Paulo" E !entrevista feita
+- Alternativas: cidade:Maringá OU cidade:Campinas
+Use E/OU em maiúsculas. E tem prioridade sobre OU. Não há suporte a parênteses.
+A interface mostra a interpretação da consulta. Os filtros simples são combinados com a pesquisa e com o painel avançado.
+Nas condições de entrevista/apresentação, use sim ou não.
+Sem vaga selecionada, !entrevista feita considera ausência de registro em TODAS as participações. O painel permite mudar para procurar uma participação sem entrevista. Com vaga selecionada, considera aquela vaga. Candidatos sem vínculo podem ser incluídos explicitamente.
+Não confundir etapa atual com entrevista realizada: alguém aprovado pode já ter sido entrevistado.
+
+REGRAS DOS INDICADORES
+- Em andamento e prazo vencido excluem encerradas, canceladas e congeladas.
+- Prazo vencido: anterior a hoje, no calendário de São Paulo; hoje não é atraso.
+- Apresentações: uma candidatura por mês, mesmo se enviada mais de uma vez no mesmo mês. Reenvio em outro mês entra naquele outro mês sem apagar o histórico anterior.
+- Ao passar para Material enviado ao cliente, registra a data atual. Pode informar a data real do envio no formulário; datas futuras são rejeitadas.
+- Registros antigos sem data confiável não são atribuídos automaticamente ao mês atual. Informe a data real na candidatura para regularizar.
+- O campo de data permite corrigir a última apresentação registrada. Registros anteriores permanecem preservados. Alterações de datas geram observação com autor no servidor.
+- Aprovação/reprovação pelo cliente encerra a pendência. Uma nova passagem para Material enviado ao cliente reabre a pendência. Reabrir apenas a vaga não cria nova pendência se já houve retorno.
+- Apresentações do mês incluem entregas de vagas posteriormente encerradas.
+
+VALIDAÇÃO DESTA ENTREGA
+36 testes automatizados aprovados, incluindo segurança, exclusão, concorrência, filtros, vínculos em múltiplas vagas e histórico de apresentações.
+Conferência em Chromium com dados fictícios: desktop 1440 px e celular 390 px, temas, filtros, indicadores, formulários, seleção por teclado e salvamento com validação do servidor. Sem erros de JavaScript nesses fluxos.
+A hospedagem e o MySQL de produção não foram acessados nem alterados nesta preparação. Faça a verificação acima após instalar.
+
+LIMITES E CONTINUIDADE
+A busca e a paginação continuam no navegador; o servidor ainda carrega o conjunto de dados existente (JSON único). O teste de pesquisa cobriu 10 mil documentos sintéticos, mas não é uma garantia de capacidade da hospedagem. Permanecem os limites existentes de 2 MiB por salvamento e 10 mil itens por coleção. Para crescimento maior, será necessária evolução do armazenamento e pesquisa paginada no servidor.
+
+RETORNO À VERSÃO ANTERIOR
+Pare o aplicativo, restaure os arquivos da cópia feita antes da atualização e reinicie. Restaure também o SQL anterior caso precise reverter dados; isso descarta as alterações feitas após o backup. A versão antiga não conhece os novos campos de datas e pendências e pode apagá-los ao salvar: mantenha a cópia atual do banco antes de qualquer retorno. Não permita edição de dados com abas antigas abertas.
