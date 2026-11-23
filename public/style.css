@@ -39,3 +39,72 @@ body,body.auth{background:var(--bg);color:var(--ink)}aside{background:var(--dark
 #envBanner{position:fixed;left:0;right:0;bottom:0;z-index:2000;background:#e8590c;color:#fff;text-align:center;font:700 13px/1.3 'DM Sans',sans-serif;letter-spacing:.6px;padding:9px 16px;pointer-events:none;box-shadow:0 -2px 8px #0003}
 body.homolog{padding-bottom:42px}
 body.homolog>aside{border-right:4px solid #e8590c}
+
+/* ===================================================================
+   2.4 — Repaginação visual e acessibilidade (WCAG 2.2 nível AA)
+   =================================================================== */
+:root{--focus:#0b57d0;--focus-side:#ffd166;--danger:#9b3842;--hero-bg:linear-gradient(115deg,#f4f7f5 0%,#e6efe9 55%,#d6e7dd 100%);--hero-line:#c6d6cc;--hero-ring:#1d604826;--hero-chip:#f6f8f7}
+/* Tema noturno em cinza escuro (antes era quase preto esverdeado) */
+:root[data-theme=dark]{--bg:#2a2e2d;--surface:#343938;--surface-alt:#3d4341;--input:#2e3332;--ink:#eef2f0;--muted:#c3cbc7;--line:#5b6461;--soft:#3e5a4c;--green:#236c50;--dark:#1e4a3b;--focus:#9cc7ff;--danger:#f2aab1;--hero-bg:linear-gradient(115deg,#383e3c 0%,#33423b 60%,#2f4b3e 100%);--hero-line:#56625d;--hero-ring:#9ed7b41f;--hero-chip:#2e3332}
+
+/* Cabeçalho das páginas (header.page-header vence as regras antigas de "header") */
+header.page-header{height:auto;font-size:inherit;justify-content:normal}
+.page-header{position:relative;overflow:hidden;isolation:isolate;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:18px 26px;align-items:center;padding:30px 34px 30px 38px;margin:0 0 28px;border-radius:22px;background:var(--hero-bg);border:1px solid var(--hero-line);box-shadow:0 10px 30px #153c3014;animation:ph-in .35s ease-out both}
+.page-header:before{content:'';position:absolute;left:0;top:0;bottom:0;width:6px;background:linear-gradient(180deg,#2f8a63,var(--green))}
+.page-header:after{content:'';position:absolute;z-index:-1;right:-110px;top:-140px;width:420px;height:420px;border-radius:50%;background:repeating-radial-gradient(circle,transparent 0 26px,var(--hero-ring) 26px 28px);pointer-events:none}
+.ph-icon{display:grid;place-items:center;width:64px;height:64px;border-radius:18px;background:linear-gradient(145deg,#2a7a58,var(--green));color:#fff;box-shadow:0 8px 18px #1d604833}
+.ph-icon .nav-icon{width:30px;height:30px;margin:0;stroke-width:1.6}
+.ph-text{min-width:0}.page-header .eyebrow{margin:0;font-size:13px}
+.page-header h1{margin:4px 0 6px;font-size:34px;line-height:1.15;overflow-wrap:anywhere}
+.page-header h1:focus,main:focus{outline:none}
+.ph-sub{margin:0;font-size:14px;color:var(--muted);max-width:640px}
+.ph-side{display:flex;flex-direction:column;align-items:flex-end;gap:14px}
+.ph-meta{margin:0;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px 10px;font-size:13px;color:var(--muted);background:var(--hero-chip);border:1px solid var(--hero-line);border-radius:999px;padding:7px 14px}
+.ph-meta span{color:var(--ink);font-weight:600}.ph-meta span:after{content:'·';margin-left:10px;color:var(--muted);font-weight:400}
+.ph-meta time:first-letter{text-transform:uppercase}
+.ph-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.ph-actions .primary{min-height:44px;padding:11px 20px;border-radius:10px}
+@keyframes ph-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+[data-theme=dark] .page-header{box-shadow:0 10px 30px #0000002e}
+
+/* Tema noturno: menu lateral, indicadores e detalhes em harmonia com o cinza */
+[data-theme=dark] aside{background:linear-gradient(180deg,#1f4b3c,#1a3d31)}
+[data-theme=dark] .panel,[data-theme=dark] .company,[data-theme=dark] .filter-panel{box-shadow:0 8px 24px #0000001f}
+[data-theme=dark] .req{color:#f2aab1}
+
+/* Foco visível e consistente (teclado) */
+:where(a,button,input,select,textarea,summary,[tabindex]):focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+input:focus,select:focus,textarea:focus{outline:3px solid var(--focus);outline-offset:1px;border-color:var(--focus)}
+button:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+aside :focus-visible,aside button:focus-visible{outline-color:var(--focus-side)}
+.stat:focus-visible{outline-offset:4px}
+
+/* Pular direto para o conteúdo (primeiro item ao usar Tab) */
+.skip-link{position:absolute;left:16px;top:-80px;z-index:3000;background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:10px;font-weight:700;text-decoration:none}
+.skip-link:focus{top:16px}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.req{color:var(--danger);font-weight:700}
+
+/* Textos pequenos demais ficaram mais legíveis */
+th{font-size:12px;letter-spacing:.6px}td small,.picker-help,.stat small,.notes small{font-size:12px}.badge,.detailmeta .badge,.late{font-size:12px}.navlabel{font-size:11px}.result-count,.barrow{font-size:13px}.profile small{font-size:12px}
+::placeholder{color:var(--muted);opacity:1}
+
+/* Faixa de homologação não esconde o rodapé do menu */
+@media(min-width:701px){body.homolog>aside{bottom:41px}}
+
+@media(max-width:1100px){.page-header{grid-template-columns:auto minmax(0,1fr)}.ph-side{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:space-between}}
+@media(max-width:700px){.page-header{grid-template-columns:1fr;padding:22px 20px 22px 24px;border-radius:18px;gap:14px}.page-header:after{right:-170px;top:-190px}.ph-icon{width:48px;height:48px;border-radius:14px}.ph-icon .nav-icon{width:24px;height:24px}.page-header h1{font-size:26px}.ph-side{flex-direction:column;align-items:stretch}.ph-meta{flex-direction:column;gap:2px;align-self:flex-start;border-radius:12px}.ph-meta span:after{display:none}.ph-actions{justify-content:stretch}.ph-actions>*{flex:1}.ph-actions .record-tools{width:100%}}
+
+/* Movimento reduzido: respeita a preferência do sistema */
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+/* Alto contraste do Windows */
+@media(forced-colors:active){.stat,.badge,.page-header,.ph-meta{border:1px solid CanvasText}:focus-visible{outline:3px solid Highlight!important}#nav button[aria-current=page]{outline:2px solid Highlight}}
+/* Contraste AA: datas dos próximos passos e faixa de homologação (laranja mais escuro, texto branco 5,2:1) */
+.task time{color:var(--muted);font-size:12px}
+#envBanner{background:#c2410c}body.homolog>aside{border-right-color:#c2410c}
+/* Logo oficial (horizontal, colorida) sobre base branca: legível nos dois temas */
+aside .brand{display:block;min-height:0;padding:14px 16px;border-radius:14px;background:#fff}
+aside .brand:after{content:none}
+aside .brand img{display:block;float:none;width:100%;height:auto;margin:0}
+.access-card .auth-logo{display:block;width:min(280px,100%);height:auto;padding:12px 16px;margin-bottom:24px;background:#fff;border-radius:14px}
+@media(max-width:700px){aside .brand{width:210px;padding:10px 12px;min-height:0}aside .brand img{width:100%;height:auto}}
