@@ -10,13 +10,13 @@ Em produção em https://ats.infrahumana.com.br (versão **2.3.0**).
 - Servidor Node.js (>= 22) com o módulo `http` nativo, sem framework (`server.js`, `app.js`).
 - Banco MySQL via `mysql2` (`database.js`). Os dados de negócio ficam num JSON único na tabela `ats_state`; usuários e sessões têm tabelas próprias.
 
-Documentação completa do sistema: [docs/CONTEXTO.md](docs/CONTEXTO.md).
+Documentação completa do sistema: [docs/CONTEXTO.md](docs/CONTEXTO.md). Ambiente de teste: [docs/HOMOLOGACAO.md](docs/HOMOLOGACAO.md).
 
 ## Rodar os testes
 
 ```bash
 npm ci      # instala as dependências exatamente como no package-lock.json
-npm test    # roda os testes automatizados (36 na versão 2.3)
+npm test    # roda os testes automatizados (40 com os testes da homologação)
 ```
 
 Os testes não precisam de banco de dados: usam um repositório em memória e dados fictícios.
@@ -24,7 +24,7 @@ Os testes não precisam de banco de dados: usam um repositório em memória e da
 ## Variáveis de ambiente
 
 Configuradas **somente** no painel da hospedagem, nunca no repositório:
-`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_NAME` (precisa terminar em `_ats`), `DB_PASSWORD`, `APP_ORIGIN`, `SETUP_TOKEN` (apenas para o primeiro acesso) e `PORT`.
+`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_NAME` (precisa terminar em `_ats`), `DB_PASSWORD`, `APP_ORIGIN`, `SETUP_TOKEN` (apenas para o primeiro acesso), `PORT` e, só na homologação, `ATS_AMBIENTE=homologacao`.
 
 ## Deploy no Painel Munhoz (resumo)
 
