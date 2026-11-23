@@ -44,7 +44,7 @@ function sanitize(input,previous,users,actor,allowDelete=false){
  for(let j of out.jobs){let old=previous.jobs.find(x=>x.id===j.id);if(JSON.stringify(old)!==JSON.stringify(j))out.history=[{id:crypto.randomUUID(),job:j.id,text:old?'Cadastro da vaga atualizado.':'Vaga criada.',author:actor.name,at:stamp()},...out.history]}
  return out;
 }
-function createServer(repo,config){const origin=config.origin,local=config.localTest===true;const cookieName=local?'ih_session':'__Host-ih_session';
+function createServer(repo,config){const origin=config.origin,local=config.localTest===true,environment=config.environment==='homologacao'?'homologacao':'producao';const cookieName=local?'ih_session':'__Host-ih_session';
  function send(res,status,data){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(data))}
  async function body(req){let chunks=[],size=0;for await(let c of req){size+=c.length;if(size>2*1024*1024)fail(413,'Dados muito grandes.');chunks.push(c)}try{return JSON.parse(Buffer.concat(chunks).toString())}catch{fail(400,'JSON inválido.')}}
  const server=http.createServer(async(req,res)=>{res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");res.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=()');
@@ -53,7 +53,7 @@ function createServer(repo,config){const origin=config.origin,local=config.local
  if(!local&&req.headers['x-forwarded-proto']?.split(',')[0].trim()!=='https'&&!req.socket.encrypted)fail(400,'Acesso permitido somente por HTTPS.');
  if(!['GET','HEAD'].includes(req.method)&&req.headers.origin!==origin)fail(403,'Origem não autorizada.');
  if(!['GET','HEAD'].includes(req.method)&&!String(req.headers['content-type']).startsWith('application/json'))fail(415,'Envie dados JSON.');
- if(route==='/api/status'&&req.method==='GET')return send(res,200,{needsSetup:!(await repo.users()).length});
+ if(route==='/api/status'&&req.method==='GET')return send(res,200,{needsSetup:!(await repo.users()).length,environment});
  if(route==='/api/setup'&&req.method==='POST'){let d=await body(req);if(!config.setupToken||config.setupToken.length<32||!equal(d.token||'',config.setupToken))fail(403,'Código de instalação inválido.');let u={name:required(d.name,100),email:email(d.email),password:await encode(d.password),role:'admin'};await repo.setup(u);return send(res,201,{ok:true})}
  if(route==='/api/login'&&req.method==='POST'){let d=await body(req),e=email(d.email),key=hash(e);if(await repo.blocked(key))fail(429,'Muitas tentativas. Aguarde 15 minutos.');let u=await repo.userByEmail(e);let ok=u&&u.active&&await verify(d.password,u.password);if(!ok){await repo.failed(key);fail(401,'E-mail ou senha incorretos.')}await repo.clearFailures(key);let token=crypto.randomBytes(32).toString('hex');await repo.session(hash(token),u.id);res.setHeader('Set-Cookie',`${cookieName}=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=28800${local?'':'; Secure'}`);return send(res,200,{ok:true})}
  let token=String(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith(cookieName+'='))?.slice(cookieName.length+1);let user=token?await repo.authenticate(hash(token)):null;if(!user)fail(401,'Entre para continuar.');
@@ -70,11 +70,15 @@ function createServer(repo,config){const origin=config.origin,local=config.local
  if(req.method!=='GET'&&req.method!=='HEAD')fail(405,'Método não permitido.');let files={'/':'index.html','/index.html':'index.html','/app.js':'app.js','/style.css':'style.css','/auth.js':'auth.js','/logo.png':'logo.png','/query.js':'query.js','/theme.js':'theme.js'};let f=files[route];if(!f)fail(404,'Arquivo não encontrado.');let file=path.join(__dirname,'public',f),data=fs.readFileSync(file);res.writeHead(200,{'Content-Type':f.endsWith('.png')?'image/png':f.endsWith('.html')?'text/html; charset=utf-8':f.endsWith('.css')?'text/css; charset=utf-8':'text/javascript; charset=utf-8'});res.end(req.method==='HEAD'?undefined:data);
  }catch(e){if(!e.status)console.error('ats_request_failed',e.code||e.name);send(res,e.status||500,{error:e.status?e.message:'Não foi possível concluir. Verifique o log da aplicação.'})}});return server;
 }
+const PRODUCTION_DATABASES=['infraest_ats'],PRODUCTION_ORIGINS=['https://ats.infrahumana.com.br'];
 async function start(){
  const origin=process.env.APP_ORIGIN;
  if(!origin||new URL(origin).protocol!=='https:'||new URL(origin).origin!==origin)throw new Error('APP_ORIGIN deve ser a origem HTTPS, sem barra final.');
  if(!process.env.DB_PASSWORD||!process.env.DB_NAME?.endsWith('_ats'))throw new Error('Configure DB_PASSWORD e banco exclusivo com final _ats.');
+ const environment=process.env.ATS_AMBIENTE==='homologacao'?'homologacao':'producao';
+ // Trava de segurança: a homologação nunca pode apontar para o banco ou o endereço de produção.
+ if(environment==='homologacao'&&(PRODUCTION_DATABASES.includes(process.env.DB_NAME)||PRODUCTION_ORIGINS.includes(origin)))throw new Error('Homologação não pode usar o banco nem o endereço de produção.');
  const repo=await require('./database').connect();
- return createServer(repo,{origin,setupToken:process.env.SETUP_TOKEN}).listen(process.env.PORT||3000);
+ return createServer(repo,{origin,environment,setupToken:process.env.SETUP_TOKEN}).listen(process.env.PORT||3000);
 }
-module.exports={createServer,sanitize,encode,verify,empty,start};
+module.exports={createServer,sanitize,encode,verify,empty,start,PRODUCTION_DATABASES,PRODUCTION_ORIGINS};
