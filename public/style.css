@@ -102,3 +102,9 @@ th{font-size:12px;letter-spacing:.6px}td small,.picker-help,.stat small,.notes s
 /* Contraste AA: datas dos próximos passos e faixa de homologação (laranja mais escuro, texto branco 5,2:1) */
 .task time{color:var(--muted);font-size:12px}
 #envBanner{background:#c2410c}body.homolog>aside{border-right-color:#c2410c}
+/* Logo oficial (horizontal, colorida) sobre base branca: legível nos dois temas */
+aside .brand{display:block;min-height:0;padding:14px 16px;border-radius:14px;background:#fff}
+aside .brand:after{content:none}
+aside .brand img{display:block;float:none;width:100%;height:auto;margin:0}
+.access-card .auth-logo{display:block;width:min(280px,100%);height:auto;padding:12px 16px;margin-bottom:24px;background:#fff;border-radius:14px}
+@media(max-width:700px){aside .brand{width:210px;padding:10px 12px;min-height:0}aside .brand img{width:100%;height:auto}}
