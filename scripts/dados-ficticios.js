@@ -16,9 +16,9 @@ function dia(deslocamento){const hoje=new Intl.DateTimeFormat('en-CA',{timeZone:
 function gerarDadosFicticios(responsavel){
  const data=empty();
  EMPRESAS.forEach(([name,sector,city],i)=>data.companies.push({id:i+1,name,sector,city,logo:''}));
- NOMES.forEach((name,i)=>{const login=name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').split(' ').join('.');data.candidates.push({id:i+1,name,email:login+'@example.com',phone:'(11) 90000-'+String(1000+i),phone1:'',phone2:'',city:CIDADES[i%CIDADES.length],origin:'Dado fictício',cv:'https://example.com/curriculo-'+(i+1)+'.pdf'})});
+ NOMES.forEach((name,i)=>{const login=name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').split(' ').join('.');data.candidates.push({id:i+1,name,email:login+'@example.com',phone:'(11) 90000-'+String(1000+i),phone1:'',phone2:'',city:CIDADES[i%CIDADES.length],origin:['LinkedIn','Catho','Indicação','Banco de Currículos','E-mail'][i%5],cv:'https://example.com/curriculo-'+(i+1)+'.pdf'})});
  VAGAS.forEach(([company,title,status,prazo],i)=>data.jobs.push({id:i+1,company,title,owner:responsavel,deadline:dia(prazo),status,mapped:0,chosen:null}));
- VINCULOS.forEach(([job,candidate,status],i)=>data.applications.push({id:i+1,job,candidate,status,owner:responsavel,first:dia(-15+i),interview:['Entrevista feita','Aprovado na entrevista RH','Reprovado em entrevista RH'].includes(status)?dia(-5):'',follow:status?dia(3):'',action:status?'Retornar contato (teste)':'',notes:[{text:'Observação fictícia criada para testes.'}]}));
+ VINCULOS.forEach(([job,candidate,status],i)=>data.applications.push({id:i+1,job,candidate,status,owner:responsavel,first:dia(-15+i),interview:['Entrevista feita','Aprovado na entrevista RH','Reprovado em entrevista RH'].includes(status)?dia(-5):'',follow:status?dia(3):'',action:status?'Retornar contato (teste)':'',rejectReason:/^Reprovado/.test(status)?'Motivo fictício para testes.':'',notes:[{text:'Observação fictícia criada para testes.'}]}));
  data.jobs[5].chosen=11; // vaga encerrada com profissional escolhido
  return data;
 }
