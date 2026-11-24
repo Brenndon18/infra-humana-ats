@@ -69,7 +69,7 @@ test('e-mail: mensagem é única e não muda com o motivo de reprovação',()=>{
 });
 
 test('e-mail: registro "thanks" é do servidor e sobrevive a salvamentos comuns',()=>{
- const base={companies:[{id:1,name:'Empresa'}],jobs:[{id:2,company:1,title:'Vaga',owner:admin.name,status:'Aberta',mapped:0}],candidates:[{id:3,name:'Ana',email:'ana@example.com'}],applications:[{id:4,job:2,candidate:3,status:'Reprovado pelo cliente',owner:admin.name,notes:[]}]};
+ const base={companies:[{id:1,name:'Empresa'}],jobs:[{id:2,company:1,title:'Vaga',owner:admin.name,status:'Aberta',mapped:0}],candidates:[{id:3,name:'Ana',email:'ana@example.com'}],applications:[{id:4,job:2,candidate:3,status:'Reprovado pelo cliente',rejectReason:'Perfil técnico',owner:admin.name,notes:[]}]};
  const forged=sanitize({...base,applications:[{...base.applications[0],thanks:{at:'forjado'}}]},empty(),[admin],admin);
  assert.equal(forged.applications[0].thanks,null,'tela não consegue forjar o envio');
  const previous=structuredClone(forged);previous.applications[0].thanks={at:'01/12/2026',by:admin.name,to:'ana@example.com',mode:'ativo'};
