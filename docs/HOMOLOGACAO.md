@@ -32,6 +32,7 @@ Travas automáticas quando `ATS_AMBIENTE=homologacao`:
 
 - o app **não inicia** se `DB_NAME` for `infraest_ats` ou se `APP_ORIGIN` for o endereço de produção;
 - o script de dados fictícios só roda na homologação, nunca no banco de produção, e só com o banco vazio.
+- o e-mail de agradecimento **nunca** vai para o candidato: sem `EMAIL_TESTE` o envio é só simulado (registra no histórico e não manda nada); com `EMAIL_TESTE` e as variáveis da Microsoft, vai somente para esse endereço de teste. Veja `docs/EMAIL-OUTLOOK.md`.
 
 Na produção nada muda: sem `ATS_AMBIENTE`, o sistema funciona como hoje e não mostra a faixa.
 

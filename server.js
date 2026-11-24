@@ -41,7 +41,7 @@ function sanitize(input,previous,users,actor,allowDelete=false){
  const returned=['Aprovado pelo cliente','Reprovado pelo cliente'].includes(a.status);
  const pending=returned?false:sentNow?true:(old?.clientPending??(old?.status==='Material enviado ao cliente'));
  if(JSON.stringify(dates)!==JSON.stringify(old?.presentationDates||[]))notes.unshift({id:crypto.randomUUID(),text:'Datas de apresentação: '+dates.join(', '),author:actor.name,at:stamp()});
- out.applications.push({id:a.id,job:a.job,candidate:a.candidate,status:a.status,owner:owner(a.owner),first:date(a.first),interview:date(a.interview),follow:date(a.follow),action:text(a.action||'',500),interviewed:!!old?.interviewed||a.status==='Entrevista feita',presented:!!old?.presented||a.status==='Material enviado ao cliente',presentationDates:dates,clientPending:pending,rejectReason,notes})}
+ out.applications.push({id:a.id,job:a.job,candidate:a.candidate,status:a.status,owner:owner(a.owner),first:date(a.first),interview:date(a.interview),follow:date(a.follow),action:text(a.action||'',500),interviewed:!!old?.interviewed||a.status==='Entrevista feita',presented:!!old?.presented||a.status==='Material enviado ao cliente',presentationDates:dates,clientPending:pending,rejectReason,notes,thanks:old?.thanks||null})}
  for(let j of out.jobs)if(j.chosen&&!out.applications.some(a=>a.job===j.id&&a.candidate===j.chosen))fail(400,'Profissional escolhido deve estar vinculado à vaga.');
  // Remoções exigem uma operação explícita; salvamentos comuns preservam o histórico.
  for(let key of ['companies','jobs','candidates','applications'])for(let row of previous[key])if(!allowDelete&&!ids[key].has(row.id))fail(400,'Confirme a exclusão pelo botão Excluir.');
@@ -50,7 +50,7 @@ function sanitize(input,previous,users,actor,allowDelete=false){
  for(let j of out.jobs){let old=previous.jobs.find(x=>x.id===j.id);if(JSON.stringify(old)!==JSON.stringify(j))out.history=[{id:crypto.randomUUID(),job:j.id,text:old?'Cadastro da vaga atualizado.':'Vaga criada.',author:actor.name,at:stamp()},...out.history]}
  return out;
 }
-function createServer(repo,config){const origin=config.origin,local=config.localTest===true,environment=config.environment==='homologacao'?'homologacao':'producao';const cookieName=local?'ih_session':'__Host-ih_session';
+function createServer(repo,config){const origin=config.origin,local=config.localTest===true,environment=config.environment==='homologacao'?'homologacao':'producao';const cookieName=local?'ih_session':'__Host-ih_session';const mailer=config.mailer||{mode:'desligado'},sending=new Set();
  function send(res,status,data){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(data))}
  async function body(req){let chunks=[],size=0;for await(let c of req){size+=c.length;if(size>2*1024*1024)fail(413,'Dados muito grandes.');chunks.push(c)}try{return JSON.parse(Buffer.concat(chunks).toString())}catch{fail(400,'JSON inválido.')}}
  const server=http.createServer(async(req,res)=>{res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");res.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=()');
@@ -59,7 +59,7 @@ function createServer(repo,config){const origin=config.origin,local=config.local
  if(!local&&req.headers['x-forwarded-proto']?.split(',')[0].trim()!=='https'&&!req.socket.encrypted)fail(400,'Acesso permitido somente por HTTPS.');
  if(!['GET','HEAD'].includes(req.method)&&req.headers.origin!==origin)fail(403,'Origem não autorizada.');
  if(!['GET','HEAD'].includes(req.method)&&!String(req.headers['content-type']).startsWith('application/json'))fail(415,'Envie dados JSON.');
- if(route==='/api/status'&&req.method==='GET')return send(res,200,{needsSetup:!(await repo.users()).length,environment});
+ if(route==='/api/status'&&req.method==='GET')return send(res,200,{needsSetup:!(await repo.users()).length,environment,email:mailer.mode});
  if(route==='/api/setup'&&req.method==='POST'){let d=await body(req);if(!config.setupToken||config.setupToken.length<32||!equal(d.token||'',config.setupToken))fail(403,'Código de instalação inválido.');let u={name:required(d.name,100),email:email(d.email),password:await encode(d.password),role:'admin'};await repo.setup(u);return send(res,201,{ok:true})}
  if(route==='/api/login'&&req.method==='POST'){let d=await body(req),e=email(d.email),key=hash(e);if(await repo.blocked(key))fail(429,'Muitas tentativas. Aguarde 15 minutos.');let u=await repo.userByEmail(e);let ok=u&&u.active&&await verify(d.password,u.password);if(!ok){await repo.failed(key);fail(401,'E-mail ou senha incorretos.')}await repo.clearFailures(key);let token=crypto.randomBytes(32).toString('hex');await repo.session(hash(token),u.id);res.setHeader('Set-Cookie',`${cookieName}=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=28800${local?'':'; Secure'}`);return send(res,200,{ok:true})}
  let token=String(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith(cookieName+'='))?.slice(cookieName.length+1);let user=token?await repo.authenticate(hash(token)):null;if(!user)fail(401,'Entre para continuar.');
@@ -70,6 +70,15 @@ function createServer(repo,config){const origin=config.origin,local=config.local
  if(route==='/api/password'&&req.method==='POST'){let d=await body(req),fresh=await repo.userByEmail(user.email);if(!await verify(d.current,fresh.password))fail(401,'Senha atual incorreta.');await repo.changePassword(user.id,await encode(d.password));return send(res,200,{ok:true})}
  if(route==='/api/state'&&req.method==='GET')return send(res,200,await repo.getState());
  if(route==='/api/state'&&req.method==='PUT'){let d=await body(req);if(!Number.isInteger(d.revision))fail(400,'Versão inválida.');let users=await repo.users();let result=await repo.updateState(d.revision,old=>sanitize(d.data,old,users,user,d.deleteMode===true),user.id);return send(res,200,result)}
+ // E-mail de agradecimento ao candidato reprovado: envia pela Microsoft e registra no histórico da candidatura.
+ if(route==='/api/thanks-email'&&req.method==='GET'){if(mailer.mode==='desligado')fail(503,'O envio de e-mail não está configurado.');let aid=num(Number(url.searchParams.get('application'))),{data}=await repo.getState(),a=data.applications.find(x=>x.id===aid);if(!a)fail(404,'Candidatura não encontrada.');let c=data.candidates.find(x=>x.id===a.candidate),j=data.jobs.find(x=>x.id===a.job);if(!c?.email)fail(400,'Cadastre o e-mail do candidato antes de enviar.');return send(res,200,{mode:mailer.mode,candidateEmail:c.email,sent:a.thanks||null,...mailer.compose({name:c.name,email:c.email,jobTitle:j?.title})})}
+ if(route==='/api/thanks-email'&&req.method==='POST'){let d=await body(req),aid=num(d.application);if(mailer.mode==='desligado')fail(503,'O envio de e-mail não está configurado.');if(sending.has(aid))fail(409,'Este e-mail já está sendo enviado.');sending.add(aid);try{
+  let {data}=await repo.getState(),a=data.applications.find(x=>x.id===aid);if(!a)fail(404,'Candidatura não encontrada.');if(!REJECTED.includes(a.status))fail(400,'O e-mail de agradecimento é só para candidatos reprovados.');if(a.thanks)fail(409,'O e-mail de agradecimento já foi registrado em '+a.thanks.at+'.');
+  let c=data.candidates.find(x=>x.id===a.candidate),j=data.jobs.find(x=>x.id===a.job);if(!c?.email)fail(400,'Cadastre o e-mail do candidato antes de enviar.');
+  let sent=await mailer.sendThanks({name:c.name,email:c.email,jobTitle:j?.title});
+  let note=sent.mode==='ativo'?`E-mail de agradecimento enviado para ${c.email}.`:sent.mode==='teste'?`Homologação: e-mail de agradecimento enviado para o endereço de teste (${sent.to}), e não para ${c.email}.`:`Homologação: envio do e-mail de agradecimento simulado (nada foi enviado).`;
+  let result=await repo.mutateState(state=>{let x=state.applications.find(y=>y.id===aid);if(x){x.thanks={at:stamp(),by:user.name,to:sent.to,mode:sent.mode};x.notes=[{id:crypto.randomUUID(),text:note,author:user.name,at:stamp()},...(x.notes||[])]}return state},user.id);
+  return send(res,200,{...result,message:sent.mode==='simulado'?'Envio simulado na homologação.':'E-mail de agradecimento enviado.'})}finally{sending.delete(aid)}}
  if(route==='/api/export'&&req.method==='GET'){res.setHeader('Content-Disposition','attachment; filename="infra-humana-ats-backup.json"');return send(res,200,{exportedAt:new Date().toISOString(),...(await repo.getState())})}
  fail(404,'Endereço não encontrado.');
  }
@@ -85,6 +94,7 @@ async function start(){
  // Trava de segurança: a homologação nunca pode apontar para o banco ou o endereço de produção.
  if(environment==='homologacao'&&(PRODUCTION_DATABASES.includes(process.env.DB_NAME)||PRODUCTION_ORIGINS.includes(origin)))throw new Error('Homologação não pode usar o banco nem o endereço de produção.');
  const repo=await require('./database').connect();
- return createServer(repo,{origin,environment,setupToken:process.env.SETUP_TOKEN}).listen(process.env.PORT||3000);
+ const mailer=require('./mailer').createMailer(process.env,{environment});
+ return createServer(repo,{origin,environment,mailer,setupToken:process.env.SETUP_TOKEN}).listen(process.env.PORT||3000);
 }
 module.exports={createServer,sanitize,encode,verify,empty,start,PRODUCTION_DATABASES,PRODUCTION_ORIGINS};

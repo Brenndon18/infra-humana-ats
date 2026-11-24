@@ -26,6 +26,8 @@ Os testes não precisam de banco de dados: usam um repositório em memória e da
 Configuradas **somente** no painel da hospedagem, nunca no repositório:
 `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_NAME` (precisa terminar em `_ats`), `DB_PASSWORD`, `APP_ORIGIN`, `SETUP_TOKEN` (apenas para o primeiro acesso), `PORT` e, só na homologação, `ATS_AMBIENTE=homologacao`.
 
+E-mail de agradecimento (opcional, versão 2.5): `EMAIL_AGRADECIMENTO=ativo`, `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_CLIENT_SECRET`, `EMAIL_REMETENTE` e, só na homologação, `EMAIL_TESTE`. Passo a passo em `docs/EMAIL-OUTLOOK.md`.
+
 ## Deploy no Painel Munhoz (resumo)
 
 O deploy continua manual. Detalhes e verificação pós-instalação em `ATUALIZACAO-2.3.txt`.

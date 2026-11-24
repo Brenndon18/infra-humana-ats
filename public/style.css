@@ -115,3 +115,9 @@ aside .brand img{display:block;float:none;width:100%;height:auto;margin:0}
 @media(max-width:700px){#toast{top:12px;right:16px;left:16px;max-width:none}}
 .reject-reason{white-space:normal;max-width:320px;color:var(--muted)}
 .reject-field[hidden]{display:none}
+
+/* E-mail de agradecimento (2.5) */
+.thanks-info{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--surface-alt,#f6f8f3)}.thanks-info button{align-self:flex-start}
+.thanks-warn{background:#fdf0e6;color:#7a3a0b;border-left:3px solid #c2410c;padding:10px 14px;border-radius:0 8px 8px 0}
+.mail-preview{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:12px}.mail-preview summary{cursor:pointer;font-weight:600;color:var(--green)}:root[data-theme=dark] .mail-preview summary{color:var(--ink)}
+.mail-body{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.6;background:var(--surface-alt,#f6f8f3);padding:14px;border-radius:8px}
